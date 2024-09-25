@@ -14,12 +14,13 @@ class Net(nn.Module):
         super(Net, self).__init__()
         self.hidden_dim = hidden_size
         self.layer_dim = num_layers
-        self.rnn = nn.LSTM(num_questions * 2, hidden_size, num_layers, batch_first=True)
+        self.lstm = nn.LSTM(num_questions * 2, hidden_size, num_layers, batch_first=True)
         self.fc = nn.Linear(self.hidden_dim, num_questions)
 
     def forward(self, x):
         h0 = Variable(torch.zeros(self.layer_dim, x.size(0), self.hidden_dim))
-        out, _ = self.rnn(x, h0)
+        c0 = Variable(torch.zeros(self.layer_dim, x.size(0), self.hidden_dim))
+        out, _ = self.lstm(x, (h0, c0))
         res = torch.sigmoid(self.fc(out))
         return res
 
@@ -39,7 +40,7 @@ class DKT(object):
         self.num_questions = num_questions
         self.dkt_model = Net(num_questions, hidden_size, num_layers)
 
-    def train(self, train_data, test_data=None,save_every=None, *, epoch: int, lr=0.0001) -> ...:
+    def train(self, train_data, test_data=None, save_every=None, *, epoch: int, lr=0.0001) -> ...:
         loss_function = nn.BCELoss()
         optimizer = torch.optim.Adam(self.dkt_model.parameters(), lr)
 
@@ -68,7 +69,7 @@ class DKT(object):
                 directory = os.path.dirname(save_every)
                 if not os.path.exists(directory):
                     os.makedirs(directory)
-                self.save(save_every+str(e))
+                self.save(save_every + str(e))
 
     def eval(self, test_data) -> float:
         self.dkt_model.eval()
