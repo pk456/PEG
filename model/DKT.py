@@ -1,7 +1,5 @@
 import logging
 import os.path
-
-import numpy as np
 import torch
 import tqdm
 from torch import nn
@@ -10,47 +8,53 @@ from sklearn.metrics import roc_auc_score
 
 
 class Net(nn.Module):
-    def __init__(self, num_questions, hidden_size, num_layers):
+    def __init__(self, num_concepts, hidden_size, num_layers, device):
         super(Net, self).__init__()
         self.hidden_dim = hidden_size
         self.layer_dim = num_layers
-        self.lstm = nn.LSTM(num_questions * 2, hidden_size, num_layers, batch_first=True)
-        self.fc = nn.Linear(self.hidden_dim, num_questions)
+        self.lstm = nn.LSTM(num_concepts * 2, hidden_size, num_layers, batch_first=True)
+        self.fc = nn.Linear(self.hidden_dim, num_concepts)
+        self.device = device
 
     def forward(self, x):
-        h0 = Variable(torch.zeros(self.layer_dim, x.size(0), self.hidden_dim))
-        c0 = Variable(torch.zeros(self.layer_dim, x.size(0), self.hidden_dim))
+        h0 = Variable(torch.zeros(self.layer_dim, x.size(0), self.hidden_dim)).to(self.device)
+        c0 = Variable(torch.zeros(self.layer_dim, x.size(0), self.hidden_dim)).to(self.device)
         out, _ = self.lstm(x, (h0, c0))
         res = torch.sigmoid(self.fc(out))
         return res
 
 
-def process_raw_pred(raw_question_matrix, raw_pred, num_questions: int) -> tuple:
-    questions = torch.nonzero(raw_question_matrix)[1:, 1] % num_questions
-    length = questions.shape[0]
+def process_raw_pred(raw_question_matrix, raw_pred, num_concepts: int) -> tuple:
+    records = torch.nonzero(raw_question_matrix)[1:, 1] % num_concepts
+    length = records.shape[0]
     pred = raw_pred[: length]
-    pred = pred.gather(1, questions.view(-1, 1)).flatten()
-    truth = torch.nonzero(raw_question_matrix)[1:, 1] // num_questions
+    pred = pred.gather(1, records.view(-1, 1)).flatten()
+    truth = torch.nonzero(raw_question_matrix)[1:, 1] // num_concepts
     return pred, truth
 
 
 class DKT(object):
-    def __init__(self, num_questions, hidden_size, num_layers):
+    def __init__(self, num_concepts, hidden_size, num_layers, device=None):
         super(DKT, self).__init__()
-        self.num_questions = num_questions
-        self.dkt_model = Net(num_questions, hidden_size, num_layers)
+        if device is None:
+            device = torch.device('cpu')
+        self.device = device
+        self.num_concepts = num_concepts
+        self.dkt_model = Net(num_concepts, hidden_size, num_layers, device).to(device)
 
-    def train(self, train_data, test_data=None, save_every=None, *, epoch: int, lr=0.0001) -> ...:
+    def train(self, train_data, test_data=None, save_model_file=None, *, epoch: int, lr=0.002) -> ...:
         loss_function = nn.BCELoss()
         optimizer = torch.optim.Adam(self.dkt_model.parameters(), lr)
 
         for e in range(epoch):
-            all_pred, all_target = torch.Tensor([]), torch.Tensor([])
+            self.dkt_model.train()
+            all_pred, all_target = torch.Tensor([]).to(self.device), torch.Tensor([]).to(self.device)
             for batch in tqdm.tqdm(train_data, "Epoch %s" % e):
+                batch = batch.to(self.device)
                 integrated_pred = self.dkt_model(batch)
                 batch_size = batch.shape[0]
                 for student in range(batch_size):
-                    pred, truth = process_raw_pred(batch[student], integrated_pred[student], self.num_questions)
+                    pred, truth = process_raw_pred(batch[student], integrated_pred[student], self.num_concepts)
                     all_pred = torch.cat([all_pred, pred])
                     all_target = torch.cat([all_target, truth.float()])
 
@@ -65,25 +69,26 @@ class DKT(object):
             if test_data is not None:
                 auc = self.eval(test_data)
                 print("[Epoch %d] auc: %.6f" % (e, auc))
-            if save_every is not None:
-                directory = os.path.dirname(save_every)
+            if save_model_file is not None:
+                directory = os.path.dirname(save_model_file)
                 if not os.path.exists(directory):
                     os.makedirs(directory)
-                self.save(save_every + str(e))
+                self.save(save_model_file + str(e))
 
     def eval(self, test_data) -> float:
         self.dkt_model.eval()
-        y_pred = torch.Tensor([])
-        y_truth = torch.Tensor([])
+        y_pred = torch.Tensor([]).to(self.device)
+        y_truth = torch.Tensor([]).to(self.device)
         for batch in tqdm.tqdm(test_data, "evaluating"):
+            batch = batch.to(self.device)
             integrated_pred = self.dkt_model(batch)
             batch_size = batch.shape[0]
             for student in range(batch_size):
-                pred, truth = process_raw_pred(batch[student], integrated_pred[student], self.num_questions)
+                pred, truth = process_raw_pred(batch[student], integrated_pred[student], self.num_concepts)
                 y_pred = torch.cat([y_pred, pred])
                 y_truth = torch.cat([y_truth, truth])
 
-        return roc_auc_score(y_truth.detach().numpy(), y_pred.detach().numpy())
+        return roc_auc_score(y_truth.detach().cpu().numpy(), y_pred.detach().cpu().numpy())
 
     def save(self, filepath):
         torch.save(self.dkt_model.state_dict(), filepath)
