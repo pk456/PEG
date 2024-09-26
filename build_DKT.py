@@ -31,7 +31,7 @@ def run(args):
     # 创建模型
     dkt = DKT(args.num_concepts, args.hidden_size, args.num_layers, device=device)
     # 对模型进行训练和保存
-    dkt.train(train_loader, test_data=test_loader, save_model_file=args.save_model_file, epoch=args.epoch)
+    dkt.train(train_loader, test_data=test_loader, save_model_file=args.save_model_file, epoch=args.epoch, lr=args.lr)
 
 
 if __name__ == '__main__':
@@ -40,7 +40,8 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size.')
     parser.add_argument('--hidden_size', type=int, default=10, help='Hidden size.')
     parser.add_argument('--num_layers', type=int, default=1, help='Number of LSTM layers.')
-    parser.add_argument('--epoch', type=int, default=20, help='Number of training epochs.')
+    parser.add_argument('--epoch', type=int, default=30, help='Number of training epochs.')
+    parser.add_argument('--lr', type=float, default=0.02, help='Learning rate.')
     parser.add_argument('--num_concepts', type=int, default=122, help='Number of concepts.')
     parser.add_argument('--save_model_file', type=str, default='saved_models/model', help='File to save the model.')
     parser.add_argument('--dataset', type=str, default='c', help='Dataset in the folder named "data".')
