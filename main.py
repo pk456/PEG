@@ -117,7 +117,7 @@ def update(qb, paper_knowledges, truncated_normal, students_knowledge_status, kn
 def ctl():
     parser = argparse.ArgumentParser()
     parser.add_argument('--epoch', type=int, default=50, help='number of update paper')
-    parser.add_argument('--num_init_papers', type=int, default=10, help='number of initial papers')
+    parser.add_argument('--num_init_papers', type=int, default=1000, help='number of initial papers')
     parser.add_argument('--num_questions', type=int, default=100, help='number of questions each paper')
     parser.add_argument('--num_students', type=int, default=50, help='number of students')
     parser.add_argument('--num_concepts', type=int, default=122, help='number of knowledge')
@@ -129,10 +129,12 @@ def ctl():
     parser.add_argument('--num_layers', type=int, default=1, help='Number of LSTM layers.')
     parser.add_argument('--mean', type=float, default=70, help='')
     parser.add_argument('--std', type=float, default=15, help='')
+    parser.add_argument('--crossover_rate', type=float, default=0.8, help='crossover rate')
+    parser.add_argument('--mutation_rate', type=float, default=0.003, help='mutation rate')
     return parser.parse_args()
 
 
-def run(args):
+def pdp_eg(args):
     # 生成样本
     # 截断点
     lower_bound = 0  # 下限
@@ -166,14 +168,103 @@ def run(args):
     return min_paper_info
 
 
+def pga_eg(args):
+    # 生成样本
+    # 截断点
+    lower_bound = 0  # 下限
+    upper_bound = 100  # 上限
+    # 将边界转换为标准化的z-score
+    a = (lower_bound - args.mean) / args.std
+    b = (upper_bound - args.mean) / args.std
+    # 创建截断正态分布对象
+    truncated_normal = truncnorm(a=a, b=b, loc=args.mean, scale=args.std)
+    # 初始化
+    qb, students_knowledge_status = init(args)
+
+    # 初始群落
+    paper_pop = []
+    for i in range(args.num_init_papers):
+        paper_info = init_paper(qb, args.num_questions, truncated_normal, students_knowledge_status)
+        paper_pop.append(paper_info)
+    # todo: 因为适应度高的更容易被选中，加上是放回抽样，所以很有可能两次选的是一个个体
+    for i in tqdm.tqdm(range(args.epoch)):
+        print('第{}次迭代'.format(i))
+        new_paper_pop = []
+        while len(new_paper_pop) < args.num_init_papers:
+            # 选择父代
+            offsprings = selection(paper_pop,
+                                   [1 - paper['optimized_factor'] for paper in paper_pop],
+                                   2)
+            if random.random() <= args.crossover_rate:
+                # 交叉
+                offsprings = crossover(offsprings, args.num_questions, qb, truncated_normal, students_knowledge_status)
+                if random.random() <= args.mutation_rate:
+                    # 变异
+                    offsprings = mutation(offsprings, args.num_questions, qb, truncated_normal,
+                                          students_knowledge_status)
+                new_paper_pop.extend(offsprings)
+        paper_pop = new_paper_pop
+    return paper_pop
+
+
+def selection(paper_pop, ads, num_parents):
+    # todo: 适应度高的更容易被选中，加上是放回抽样，所以很有可能两次选的是一个个体
+    parents = random.choices(paper_pop, ads, k=num_parents)
+    return parents
+
+
+def crossover(parents, num_questions, qb, truncated_normal, students_knowledge_status):
+    pt = random.randint(1, num_questions - 2)
+    paper1 = np.concatenate((parents[0]['paper'][:pt] , parents[1]['paper'][pt:]))
+    offspring = get_paper_info(qb, paper1, truncated_normal, students_knowledge_status)
+    paper2 = np.concatenate((parents[1]['paper'][:pt], parents[0]['paper'][pt:]))
+    offspring2 = get_paper_info(qb, paper2, truncated_normal, students_knowledge_status)
+    return [offspring, offspring2]
+
+
+def get_paper_info(qb, paper, truncated_normal, students_knowledge_status):
+    paper_knowledges = qb.get_question_knowledges(paper).to(students_knowledge_status.device)
+    # 计算学生成绩
+    scores = calculate_exam_score(paper_knowledges, students_knowledge_status)
+    scores = scores.detach().to(torch.device('cpu')).numpy()
+
+    qb_cover, _ = qb.get_qb_cover()
+    paper_cover, knowledge_counts = qb.get_knowledge_cover(paper)
+    optimized_factor, dis, dif, div = optimization_factor(scores, truncated_normal, qb_cover, paper_cover)
+    return {
+        'paper': paper,
+        'paper_knowledges': paper_knowledges,
+        'scores': scores,
+        'paper_cover': paper_cover,
+        'knowledge_counts': knowledge_counts,
+        'optimized_factor': optimized_factor,
+        'dis': dis,
+        'dif': dif,
+        'div': div
+    }
+
+
+def mutation(offsprings, num_questions, qb, truncated_normal, students_knowledge_status):
+    mut_papers = []
+    # todo: 目前先随机替换一个吧
+    for offspring in offsprings:
+        k = random.randint(0, num_questions - 1)
+        new_paper, change_info = qb.change_paper(offspring['paper'], 1, [k])
+        new_paper_info = update(qb, offspring['paper_knowledges'], truncated_normal, students_knowledge_status,
+                                offspring['knowledge_counts'], change_info)
+        new_paper_info['paper'] = new_paper
+        mut_papers.append(new_paper_info)
+    return mut_papers
+
+
 if __name__ == '__main__':
     args = ctl()
     dif = []
     val = []
     div = []
-    for i in range(100):
+    for i in range(10):
         print('第', i, '次: ', end='')
-        paper_info = run(args)
+        paper_info = pga_eg(args)
         dif.append(paper_info['dif'])
         val.append(paper_info['dis'])
         div.append(paper_info['div'])

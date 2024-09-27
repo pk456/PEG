@@ -13,7 +13,7 @@ def skill_distance(qb_cover, paper_cover):
 
 
 def difficulty(avg_scores, avg):
-    return np.abs(avg_scores - avg)
+    return np.abs(avg_scores - avg) / 100
 
 
 # def div(R, Z):
@@ -41,10 +41,8 @@ def divergence(scores, truncated_normal):
     assert np.isclose(pk.sum(), 1, atol=1e-2), "Empirical distribution must sum to approximately 1"
     assert np.isclose(known_probs.sum() * np.diff(bin_edges).mean(), 1,
                       atol=1e-2), "Known distribution probabilities must sum to approximately 1"
-
-    # 计算KL散度 D(P || Q)，其中P是已知分布，Q是经验分布
-    # 注意：scipy的entropy函数计算的是逆方向的KL散度，即D(Q || P)
-    kl_divergence = entropy(pk, qk)
+    # 计算KL散度
+    kl_divergence = entropy(pk, qk, base=2)
 
     return kl_divergence
 
