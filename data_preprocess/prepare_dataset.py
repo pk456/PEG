@@ -4,6 +4,8 @@ import random
 import numpy as np
 import tqdm
 
+from data_preprocess.prepare_dataset2 import encode_onehot2, parse_student_seq2
+
 
 def parse_student_seq(student):
     q_all = []
@@ -44,13 +46,20 @@ def preprocess(args):
         log_data = json.load(f)
     all_seqs = []
     for student in log_data:
-        student_seq = parse_student_seq(student)
+        if args.knowledges:
+            student_seq = parse_student_seq2(student)
+        else:
+            student_seq = parse_student_seq(student)
         all_seqs.extend([student_seq])
 
     train_sequences, test_sequences = train_test_split(all_seqs, args.train_size, args.shuffle)
 
-    train_data = encode_onehot(train_sequences, args.max_len, args.num_concepts)
-    test_data = encode_onehot(test_sequences, args.max_len, args.num_concepts)
+    if args.knowledges:
+        train_data = encode_onehot2(train_sequences, args.max_len, args.num_concepts)
+        test_data = encode_onehot2(test_sequences, args.max_len, args.num_concepts)
+    else:
+        train_data = encode_onehot(train_sequences, args.max_len, args.num_concepts)
+        test_data = encode_onehot(test_sequences, args.max_len, args.num_concepts)
 
-    np.save(f'./data/{args.dataset}/train_data.npy', train_data)
-    np.save(f'./data/{args.dataset}/test_data.npy', test_data)
+    np.save(f'./data/{args.dataset}/train_data{args.suffix}.npy', train_data)
+    np.save(f'./data/{args.dataset}/test_data{args.suffix}.npy', test_data)

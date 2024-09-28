@@ -122,11 +122,11 @@ def ctl():
     parser.add_argument('--epoch', type=int, default=50, help='number of update paper')
     parser.add_argument('--num_init_papers', type=int, default=1000, help='number of initial papers')
     parser.add_argument('--num_questions', type=int, default=100, help='number of questions each paper')
-    parser.add_argument('--num_students', type=int, default=50, help='number of students')
+    parser.add_argument('--num_students', type=int, default=4163, help='number of students')
     parser.add_argument('--num_concepts', type=int, default=122, help='number of knowledge')
     parser.add_argument('--dataset', type=str, default='c', help='dataset')
     parser.add_argument('--gpu', type=int, default=0, help='gpu')
-    parser.add_argument('--load_model', type=str, default='./saved_models/model38', help='load model')
+    parser.add_argument('--load_model', type=str, default='./saved_models/model39', help='load model')
     parser.add_argument('--all_num_questions', type=int, default=17751, help='number of questions in qb')
     parser.add_argument('--hidden_size', type=int, default=64, help='Hidden size.')
     parser.add_argument('--num_layers', type=int, default=1, help='Number of LSTM layers.')
@@ -269,7 +269,7 @@ if __name__ == '__main__':
     dif = []
     val = []
     div = []
-    for i in range(50):
+    for i in range(100):
         print('第', i, '次: ', end='')
         paper_info = pdp_eg(args)
         dif.append(paper_info['dif'])

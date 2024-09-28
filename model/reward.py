@@ -45,14 +45,14 @@ def divergence(scores, truncated_normal):
     # 计算KL散度
     kl_divergence = entropy(pk, qk, base=2)
 
-    return kl_divergence
-
+    # return kl_divergence
+    return 1 / (1 + np.exp(-kl_divergence))
 
 def divergence_1(scores):
     # 正态分布r2
     X = stats.truncnorm((0 - 70) / 15, (100 - 70) / 15, loc=70, scale=15)
     paper_distribution = X.rvs(100, random_state=23)  # seed在main.py第120行
-    res = 1 - stats.wasserstein_distance(paper_distribution, scores) / len(scores)
+    res = stats.wasserstein_distance(paper_distribution, scores) / len(scores)
     return res
 
 
@@ -66,7 +66,7 @@ def optimization_factor(scores, truncated_normal, qb_cover, paper_cover):
     dif = difficulty(avg_scores, avg)
 
     # 分布
-    # div = divergence(scores, truncated_normal)
-    div = divergence_1(scores)
+    div = divergence(scores, truncated_normal)
+    # div = divergence_1(scores)
 
     return np.mean([dis, dif, div]), 1 - dis, avg_scores / 100, 1 - div

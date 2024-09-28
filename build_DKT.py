@@ -20,11 +20,11 @@ def run(args):
     device = torch.device(('cuda:%d' % args.gpu) if torch.cuda.is_available() else 'cpu')
 
     # 准备数据
-    if (not os.path.exists(f'data/{args.dataset}/train_data.npy') or
-            not os.path.exists(f'data/{args.dataset}/test_data.npy')):
+    if (not os.path.exists(f'data/{args.dataset}/train_data{args.suffix}.npy') or
+            not os.path.exists(f'data/{args.dataset}/test_data{args.suffix}.npy')):
         preprocess(args)
-    train_loader = get_data_loader(f'data/{args.dataset}/train_data2.npy', args.batch_size, True)
-    test_loader = get_data_loader(f'data/{args.dataset}/test_data2.npy', args.batch_size, False)
+    train_loader = get_data_loader(f'data/{args.dataset}/train_data{args.suffix}.npy', args.batch_size, True)
+    test_loader = get_data_loader(f'data/{args.dataset}/test_data{args.suffix}.npy', args.batch_size, False)
 
     logging.getLogger().setLevel(logging.INFO)
 
@@ -45,7 +45,9 @@ if __name__ == '__main__':
     parser.add_argument('--num_concepts', type=int, default=122, help='Number of concepts.')
     parser.add_argument('--save_model_file', type=str, default='saved_models2/model', help='File to save the model.')
     parser.add_argument('--dataset', type=str, default='c', help='Dataset in the folder named "data".')
-    parser.add_argument('--max_len', type=int, default=1254, help='Maximum length of the sequence.')
+    parser.add_argument('--max_len', type=int, default=200, help='Maximum length of the sequence.')
     parser.add_argument('--train_size', type=float, default=0.8, help='Ratio of training data.')
     parser.add_argument('--shuffle', type=bool, default=True, help='Whether to shuffle the data.')
+    parser.add_argument('--knowledges', type=bool, default=False, help='Whether to use many knowledge in one question.')
+    parser.add_argument('--suffix', type=str, default='', help='Suffix for the save model file.')
     run(parser.parse_args())
