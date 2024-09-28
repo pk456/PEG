@@ -2,6 +2,7 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from scipy.stats import truncnorm, entropy
+from scipy import stats
 
 
 # 知识点覆盖率
@@ -47,6 +48,14 @@ def divergence(scores, truncated_normal):
     return kl_divergence
 
 
+def divergence_1(scores):
+    # 正态分布r2
+    X = stats.truncnorm((0 - 70) / 15, (100 - 70) / 15, loc=70, scale=15)
+    paper_distribution = X.rvs(100, random_state=23)  # seed在main.py第120行
+    res = 1 - stats.wasserstein_distance(paper_distribution, scores) / len(scores)
+    return res
+
+
 def optimization_factor(scores, truncated_normal, qb_cover, paper_cover):
     # 知识点覆盖率
     dis = skill_distance(qb_cover, paper_cover)
@@ -57,9 +66,7 @@ def optimization_factor(scores, truncated_normal, qb_cover, paper_cover):
     dif = difficulty(avg_scores, avg)
 
     # 分布
-    div = divergence(scores, truncated_normal)
+    # div = divergence(scores, truncated_normal)
+    div = divergence_1(scores)
 
-    return np.mean([dis, dif, div]), 1-dis, avg_scores/100, 1-div
-
-
-
+    return np.mean([dis, dif, div]), 1 - dis, avg_scores / 100, 1 - div

@@ -7,7 +7,7 @@ import torch
 import torch.utils.data as Data
 
 from data_preprocess.prepare_dataset import preprocess
-from model.DKT import DKT
+from model.DKT2 import DKT
 
 
 def get_data_loader(data_path, batch_size, shuffle=False):
@@ -23,8 +23,8 @@ def run(args):
     if (not os.path.exists(f'data/{args.dataset}/train_data.npy') or
             not os.path.exists(f'data/{args.dataset}/test_data.npy')):
         preprocess(args)
-    train_loader = get_data_loader(f'data/{args.dataset}/train_data.npy', args.batch_size, True)
-    test_loader = get_data_loader(f'data/{args.dataset}/test_data.npy', args.batch_size, False)
+    train_loader = get_data_loader(f'data/{args.dataset}/train_data2.npy', args.batch_size, True)
+    test_loader = get_data_loader(f'data/{args.dataset}/test_data2.npy', args.batch_size, False)
 
     logging.getLogger().setLevel(logging.INFO)
 
@@ -38,14 +38,14 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=int, default=0, help='GPU id to use.')
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size.')
-    parser.add_argument('--hidden_size', type=int, default=10, help='Hidden size.')
+    parser.add_argument('--hidden_size', type=int, default=64, help='Hidden size.')
     parser.add_argument('--num_layers', type=int, default=1, help='Number of LSTM layers.')
-    parser.add_argument('--epoch', type=int, default=30, help='Number of training epochs.')
+    parser.add_argument('--epoch', type=int, default=40, help='Number of training epochs.')
     parser.add_argument('--lr', type=float, default=0.02, help='Learning rate.')
     parser.add_argument('--num_concepts', type=int, default=122, help='Number of concepts.')
-    parser.add_argument('--save_model_file', type=str, default='saved_models/model', help='File to save the model.')
+    parser.add_argument('--save_model_file', type=str, default='saved_models2/model', help='File to save the model.')
     parser.add_argument('--dataset', type=str, default='c', help='Dataset in the folder named "data".')
-    parser.add_argument('--max_len', type=int, default=200, help='Maximum length of the sequence.')
+    parser.add_argument('--max_len', type=int, default=1254, help='Maximum length of the sequence.')
     parser.add_argument('--train_size', type=float, default=0.8, help='Ratio of training data.')
     parser.add_argument('--shuffle', type=bool, default=True, help='Whether to shuffle the data.')
     run(parser.parse_args())

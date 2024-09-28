@@ -6,7 +6,7 @@ import torch
 import tqdm
 from scipy.stats import truncnorm
 
-from model.DKT import DKT
+from model.DKT2 import DKT
 from model.paper import QB
 from model.reward import optimization_factor
 from model.student import convert_logs_to_one_hot_sequences, fetch_students_knowledge_status
@@ -116,6 +116,9 @@ def update(qb, paper_knowledges, truncated_normal, students_knowledge_status, kn
 
 def ctl():
     parser = argparse.ArgumentParser()
+
+    parser.add_argument('--random_seed', type=int, default=23)  # 用于计算分布stats.wasserstein_distance而增加
+
     parser.add_argument('--epoch', type=int, default=50, help='number of update paper')
     parser.add_argument('--num_init_papers', type=int, default=1000, help='number of initial papers')
     parser.add_argument('--num_questions', type=int, default=100, help='number of questions each paper')
@@ -123,9 +126,9 @@ def ctl():
     parser.add_argument('--num_concepts', type=int, default=122, help='number of knowledge')
     parser.add_argument('--dataset', type=str, default='c', help='dataset')
     parser.add_argument('--gpu', type=int, default=0, help='gpu')
-    parser.add_argument('--load_model', type=str, default='./saved_models/model29', help='load model')
+    parser.add_argument('--load_model', type=str, default='./saved_models/model38', help='load model')
     parser.add_argument('--all_num_questions', type=int, default=17751, help='number of questions in qb')
-    parser.add_argument('--hidden_size', type=int, default=10, help='Hidden size.')
+    parser.add_argument('--hidden_size', type=int, default=64, help='Hidden size.')
     parser.add_argument('--num_layers', type=int, default=1, help='Number of LSTM layers.')
     parser.add_argument('--mean', type=float, default=70, help='')
     parser.add_argument('--std', type=float, default=15, help='')
@@ -204,7 +207,11 @@ def pga_eg(args):
                                           students_knowledge_status)
                 new_paper_pop.extend(offsprings)
         paper_pop = new_paper_pop
-    return paper_pop
+    max_paper_info = None
+    for final_paper in paper_pop:
+        if max_paper_info is None or final_paper['optimized_factor'] > max_paper_info['optimized_factor']:
+            max_paper_info = final_paper
+    return max_paper_info
 
 
 def selection(paper_pop, ads, num_parents):
@@ -215,7 +222,7 @@ def selection(paper_pop, ads, num_parents):
 
 def crossover(parents, num_questions, qb, truncated_normal, students_knowledge_status):
     pt = random.randint(1, num_questions - 2)
-    paper1 = np.concatenate((parents[0]['paper'][:pt] , parents[1]['paper'][pt:]))
+    paper1 = np.concatenate((parents[0]['paper'][:pt], parents[1]['paper'][pt:]))
     offspring = get_paper_info(qb, paper1, truncated_normal, students_knowledge_status)
     paper2 = np.concatenate((parents[1]['paper'][:pt], parents[0]['paper'][pt:]))
     offspring2 = get_paper_info(qb, paper2, truncated_normal, students_knowledge_status)
@@ -262,9 +269,9 @@ if __name__ == '__main__':
     dif = []
     val = []
     div = []
-    for i in range(10):
+    for i in range(50):
         print('第', i, '次: ', end='')
-        paper_info = pga_eg(args)
+        paper_info = pdp_eg(args)
         dif.append(paper_info['dif'])
         val.append(paper_info['dis'])
         div.append(paper_info['div'])

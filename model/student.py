@@ -12,14 +12,33 @@ HIDDEN_SIZE = 10
 NUM_LAYERS = 1
 
 
+# def convert_logs_to_one_hot_sequences(dataset, num_concepts):
+#     with open(f'./data/{dataset}/log_data.json', 'r') as f:
+#         log_data = json.load(f)
+#     all_seqs = []
+#     for student in log_data:
+#         student_seq = parse_student_seq(student)
+#
+#         length = len(student_seq[0])
+#         one_hot = np.zeros(shape=[length, num_concepts * 2])
+#         i = 0
+#         for log in student['logs']:
+#             a = log['score']
+#             for c_id in log['knowledge_code']:
+#                 index = int(c_id + num_concepts if a > 0 else c_id)
+#                 one_hot[i, index] = 1
+#                 i += 1
+#         all_seqs.append(one_hot)
+#     return all_seqs
+
 def convert_logs_to_one_hot_sequences(dataset, num_concepts):
     with open(f'./data/{dataset}/log_data.json', 'r') as f:
         log_data = json.load(f)
     all_seqs = []
     for student in log_data:
-        student_seq = parse_student_seq(student)
+        # student_seq = parse_student_seq(student)
 
-        length = len(student_seq[0])
+        length = student['log_num']
         one_hot = np.zeros(shape=[length, num_concepts * 2])
         i = 0
         for log in student['logs']:
@@ -27,7 +46,7 @@ def convert_logs_to_one_hot_sequences(dataset, num_concepts):
             for c_id in log['knowledge_code']:
                 index = int(c_id + num_concepts if a > 0 else c_id)
                 one_hot[i, index] = 1
-                i += 1
+            i += 1
         all_seqs.append(one_hot)
     return all_seqs
 
