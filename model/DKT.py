@@ -64,11 +64,11 @@ class DKT(object):
             loss.backward()
             optimizer.step()
 
-            print("[Epoch %d] LogisticLoss: %.6f" % (e, loss))
+            logging.info("[Epoch %d] LogisticLoss: %.6f" % (e, loss))
 
             if test_data is not None:
                 auc = self.eval(test_data)
-                print("[Epoch %d] auc: %.6f" % (e, auc))
+                logging.info("[Epoch %d] auc: %.6f" % (e, auc))
             if save_model_file is not None:
                 directory = os.path.dirname(save_model_file)
                 if not os.path.exists(directory):

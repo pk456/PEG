@@ -7,22 +7,22 @@ import tqdm
 from scipy.stats import truncnorm
 
 from model.DKT2 import DKT
-from model.paper import QB
+from model.qb import QB
 from model.reward import optimization_factor
-from model.student import convert_logs_to_one_hot_sequences, fetch_students_knowledge_status
+from model.student import convert_logs_to_one_hot_sequences, fetch_students_concept_status
 
 
-def calculate_exam_score(paper_knowledges, students_knowledge_status):
+def calculate_exam_score(paper_concepts, students_concept_status):
     '''
-    :param paper_knowledges:shape [num_exer, num_concepts]
-    :param students_knowledge_status: shape [num_students, num_concepts]
+    :param paper_concepts:shape [num_exer, num_concepts]
+    :param students_concept_status: shape [num_students, num_concepts]
     :return:
     '''
-    students_knowledge_status = students_knowledge_status.unsqueeze(1).expand(-1, paper_knowledges.shape[0], -1)
-    knowledge_match = students_knowledge_status * paper_knowledges
-    mask = torch.ne(knowledge_match, 0)
-    knowledge_match = torch.where(mask, knowledge_match, 1)
-    students_q_score = torch.prod(knowledge_match, dim=-1)
+    students_concept_status = students_concept_status.unsqueeze(1).expand(-1, paper_concepts.shape[0], -1)
+    concept_match = students_concept_status * paper_concepts
+    mask = torch.ne(concept_match, 0)
+    concept_match = torch.where(mask, concept_match, 1)
+    students_q_score = torch.prod(concept_match, dim=-1)
     return torch.sum(students_q_score, dim=-1)
 
 
@@ -59,31 +59,31 @@ def init(args):
     dkt = DKT(args.num_concepts, args.hidden_size, args.num_layers, device=torch.device(f'cuda:{args.gpu}'))
     dkt.load(args.load_model)
     dkt.dkt_model.eval()
-    students_knowledge_status = fetch_students_knowledge_status(students, dkt, args.num_concepts)
+    students_concept_status = fetch_students_concept_status(students, dkt, args.num_concepts)
 
     # 读取试卷信息
     qb = QB(args.all_num_questions, args.num_concepts, f'./data/{args.dataset}/graph/e_to_k.txt',
             f'./data/{args.dataset}/exer.txt')
 
-    return qb, students_knowledge_status
+    return qb, students_concept_status
 
 
-def init_paper(qb, num_question, truncated_normal, students_knowledge_status):
+def init_paper(qb, num_question, truncated_normal, students_concept_status):
     paper = qb.generate_paper(num_question)
-    paper_knowledges = qb.get_question_knowledges(paper).to(students_knowledge_status.device)
+    paper_concepts = qb.get_question_concepts(paper).to(students_concept_status.device)
     # 计算学生成绩
-    scores = calculate_exam_score(paper_knowledges, students_knowledge_status)
+    scores = calculate_exam_score(paper_concepts, students_concept_status)
     scores = scores.detach().to(torch.device('cpu')).numpy()
 
     qb_cover, _ = qb.get_qb_cover()
-    paper_cover, knowledge_counts = qb.get_knowledge_cover(paper)
+    paper_cover, concept_counts = qb._get_paper_cover(paper)
     optimized_factor, dis, dif, div = optimization_factor(scores, truncated_normal, qb_cover, paper_cover)
     return {
         'paper': paper,
-        'paper_knowledges': paper_knowledges,
+        'paper_concepts': paper_concepts,
         'scores': scores,
         'paper_cover': paper_cover,
-        'knowledge_counts': knowledge_counts,
+        'concept_counts': concept_counts,
         'optimized_factor': optimized_factor,
         'dis': dis,
         'dif': dif,
@@ -91,22 +91,22 @@ def init_paper(qb, num_question, truncated_normal, students_knowledge_status):
     }
 
 
-def update(qb, paper_knowledges, truncated_normal, students_knowledge_status, knowledge_counts, change_info):
-    paper_knowledges = qb.change_question_knowledges(paper_knowledges, change_info).to(
-        (students_knowledge_status.device))
+def update(qb, paper_concepts, truncated_normal, students_concept_status, concept_counts, change_info):
+    paper_concepts = qb.change_question_concepts(paper_concepts, change_info).to(
+        (students_concept_status.device))
     # 计算学生成绩
-    scores = calculate_exam_score(paper_knowledges, students_knowledge_status)
+    scores = calculate_exam_score(paper_concepts, students_concept_status)
     scores = scores.detach().to(torch.device('cpu')).numpy()
 
     qb_cover, _ = qb.get_qb_cover()
-    paper_cover, knowledge_counts = qb.get_knowledge_cover_after_change(knowledge_counts, change_info)
+    paper_cover, concept_counts = qb.get_concept_cover_after_change(concept_counts, change_info)
     optimized_factor, dis, dif, div = optimization_factor(scores, truncated_normal, qb_cover, paper_cover)
     return {
-        'paper_knowledges': paper_knowledges,
+        'paper_concepts': paper_concepts,
         'scores': scores,
         'qb_cover': qb_cover,
         'paper_cover': paper_cover,
-        'knowledge_counts': knowledge_counts,
+        'concept_counts': concept_counts,
         'optimized_factor': optimized_factor,
         'dis': dis,
         'dif': dif,
@@ -123,7 +123,7 @@ def ctl():
     parser.add_argument('--num_init_papers', type=int, default=1000, help='number of initial papers')
     parser.add_argument('--num_questions', type=int, default=100, help='number of questions each paper')
     parser.add_argument('--num_students', type=int, default=4163, help='number of students')
-    parser.add_argument('--num_concepts', type=int, default=122, help='number of knowledge')
+    parser.add_argument('--num_concepts', type=int, default=122, help='number of concept')
     parser.add_argument('--dataset', type=str, default='c', help='dataset')
     parser.add_argument('--gpu', type=int, default=0, help='gpu')
     parser.add_argument('--load_model', type=str, default='./saved_models/model39', help='load model')
@@ -148,11 +148,11 @@ def pdp_eg(args):
     # 创建截断正态分布对象
     truncated_normal = truncnorm(a=a, b=b, loc=args.mean, scale=args.std)
     # 初始化
-    qb, students_knowledge_status = init(args)
+    qb, students_concept_status = init(args)
 
     min_paper_info = None
     for i in range(args.num_init_papers):
-        paper_info = init_paper(qb, args.num_questions, truncated_normal, students_knowledge_status)
+        paper_info = init_paper(qb, args.num_questions, truncated_normal, students_concept_status)
         if min_paper_info is None or paper_info['optimized_factor'] < min_paper_info['optimized_factor']:
             min_paper_info = paper_info
 
@@ -161,9 +161,9 @@ def pdp_eg(args):
     for i in tqdm.tqdm(range(args.epoch)):
         if i >= args.num_questions:
             break
-        new_paper, change_info = qb.change_paper(paper, 1, [i])
-        new_paper_info = update(qb, min_paper_info['paper_knowledges'], truncated_normal, students_knowledge_status,
-                                min_paper_info['knowledge_counts'], change_info)
+        new_paper, change_info = qb.change_paper(paper, [i])
+        new_paper_info = update(qb, min_paper_info['paper_concepts'], truncated_normal, students_concept_status,
+                                min_paper_info['concept_counts'], change_info)
         if new_paper_info['optimized_factor'] < min_paper_info['optimized_factor']:
             min_paper_info = new_paper_info
             min_paper_info['paper'] = new_paper
@@ -182,12 +182,12 @@ def pga_eg(args):
     # 创建截断正态分布对象
     truncated_normal = truncnorm(a=a, b=b, loc=args.mean, scale=args.std)
     # 初始化
-    qb, students_knowledge_status = init(args)
+    qb, students_concept_status = init(args)
 
     # 初始群落
     paper_pop = []
     for i in range(args.num_init_papers):
-        paper_info = init_paper(qb, args.num_questions, truncated_normal, students_knowledge_status)
+        paper_info = init_paper(qb, args.num_questions, truncated_normal, students_concept_status)
         paper_pop.append(paper_info)
     # todo: 因为适应度高的更容易被选中，加上是放回抽样，所以很有可能两次选的是一个个体
     for i in tqdm.tqdm(range(args.epoch)):
@@ -200,11 +200,11 @@ def pga_eg(args):
                                    2)
             if random.random() <= args.crossover_rate:
                 # 交叉
-                offsprings = crossover(offsprings, args.num_questions, qb, truncated_normal, students_knowledge_status)
+                offsprings = crossover(offsprings, args.num_questions, qb, truncated_normal, students_concept_status)
                 if random.random() <= args.mutation_rate:
                     # 变异
                     offsprings = mutation(offsprings, args.num_questions, qb, truncated_normal,
-                                          students_knowledge_status)
+                                          students_concept_status)
                 new_paper_pop.extend(offsprings)
         paper_pop = new_paper_pop
     max_paper_info = None
@@ -220,30 +220,30 @@ def selection(paper_pop, ads, num_parents):
     return parents
 
 
-def crossover(parents, num_questions, qb, truncated_normal, students_knowledge_status):
+def crossover(parents, num_questions, qb, truncated_normal, students_concept_status):
     pt = random.randint(1, num_questions - 2)
     paper1 = np.concatenate((parents[0]['paper'][:pt], parents[1]['paper'][pt:]))
-    offspring = get_paper_info(qb, paper1, truncated_normal, students_knowledge_status)
+    offspring = get_paper_info(qb, paper1, truncated_normal, students_concept_status)
     paper2 = np.concatenate((parents[1]['paper'][:pt], parents[0]['paper'][pt:]))
-    offspring2 = get_paper_info(qb, paper2, truncated_normal, students_knowledge_status)
+    offspring2 = get_paper_info(qb, paper2, truncated_normal, students_concept_status)
     return [offspring, offspring2]
 
 
-def get_paper_info(qb, paper, truncated_normal, students_knowledge_status):
-    paper_knowledges = qb.get_question_knowledges(paper).to(students_knowledge_status.device)
+def get_paper_info(qb, paper, truncated_normal, students_concept_status):
+    paper_concepts = qb.get_question_concepts(paper).to(students_concept_status.device)
     # 计算学生成绩
-    scores = calculate_exam_score(paper_knowledges, students_knowledge_status)
+    scores = calculate_exam_score(paper_concepts, students_concept_status)
     scores = scores.detach().to(torch.device('cpu')).numpy()
 
     qb_cover, _ = qb.get_qb_cover()
-    paper_cover, knowledge_counts = qb.get_knowledge_cover(paper)
+    paper_cover, concept_counts = qb._get_paper_cover(paper)
     optimized_factor, dis, dif, div = optimization_factor(scores, truncated_normal, qb_cover, paper_cover)
     return {
         'paper': paper,
-        'paper_knowledges': paper_knowledges,
+        'paper_concepts': paper_concepts,
         'scores': scores,
         'paper_cover': paper_cover,
-        'knowledge_counts': knowledge_counts,
+        'concept_counts': concept_counts,
         'optimized_factor': optimized_factor,
         'dis': dis,
         'dif': dif,
@@ -251,14 +251,14 @@ def get_paper_info(qb, paper, truncated_normal, students_knowledge_status):
     }
 
 
-def mutation(offsprings, num_questions, qb, truncated_normal, students_knowledge_status):
+def mutation(offsprings, num_questions, qb, truncated_normal, students_concept_status):
     mut_papers = []
     # todo: 目前先随机替换一个吧
     for offspring in offsprings:
         k = random.randint(0, num_questions - 1)
-        new_paper, change_info = qb.change_paper(offspring['paper'], 1, [k])
-        new_paper_info = update(qb, offspring['paper_knowledges'], truncated_normal, students_knowledge_status,
-                                offspring['knowledge_counts'], change_info)
+        new_paper, change_info = qb.change_paper(offspring['paper'], [k])
+        new_paper_info = update(qb, offspring['paper_concepts'], truncated_normal, students_concept_status,
+                                offspring['concept_counts'], change_info)
         new_paper_info['paper'] = new_paper
         mut_papers.append(new_paper_info)
     return mut_papers

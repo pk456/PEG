@@ -34,7 +34,7 @@ def encode_onehot(sequences, max_step, num_concepts):
     return result.reshape(-1, max_step, 2 * num_concepts)
 
 
-def train_test_split(data, train_size=.7, shuffle=True):
+def train_test_split(data, train_size=.8, shuffle=True):
     if shuffle:
         random.shuffle(data)
     boundary = round(len(data) * train_size)
@@ -46,20 +46,20 @@ def preprocess(args):
         log_data = json.load(f)
     all_seqs = []
     for student in log_data:
-        if args.knowledges:
-            student_seq = parse_student_seq2(student)
-        else:
-            student_seq = parse_student_seq(student)
+        # if args.knowledges:
+        #     student_seq = parse_student_seq2(student)
+        # else:
+        student_seq = parse_student_seq(student)
         all_seqs.extend([student_seq])
 
     train_sequences, test_sequences = train_test_split(all_seqs, args.train_size, args.shuffle)
 
-    if args.knowledges:
-        train_data = encode_onehot2(train_sequences, args.max_len, args.num_concepts)
-        test_data = encode_onehot2(test_sequences, args.max_len, args.num_concepts)
-    else:
-        train_data = encode_onehot(train_sequences, args.max_len, args.num_concepts)
-        test_data = encode_onehot(test_sequences, args.max_len, args.num_concepts)
+    # if args.knowledges:
+    #     train_data = encode_onehot2(train_sequences, args.max_len, args.num_concepts)
+    #     test_data = encode_onehot2(test_sequences, args.max_len, args.num_concepts)
+    # else:
+    train_data = encode_onehot(train_sequences, args.max_len, args.num_concepts)
+    test_data = encode_onehot(test_sequences, args.max_len, args.num_concepts)
 
-    np.save(f'./data/{args.dataset}/train_data{args.suffix}.npy', train_data)
-    np.save(f'./data/{args.dataset}/test_data{args.suffix}.npy', test_data)
+    np.save(f'./data/{args.dataset}/train_data.npy', train_data)
+    np.save(f'./data/{args.dataset}/test_data.npy', test_data)
