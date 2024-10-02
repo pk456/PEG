@@ -33,7 +33,7 @@ class PDP_EG(PEG):
                     better_paper(optimized_factor, best_optimized_factor)):
                 best_optimized_factor = optimized_factor
                 best_paper = paper
-        return best_paper, best_optimized_factor
+        return best_paper
 
     def update(self, init_data, num_q, epoch):
         best_paper = init_data
@@ -47,4 +47,4 @@ class PDP_EG(PEG):
             if better_paper(optimized_factor, best_optimized_factor):
                 best_optimized_factor = optimized_factor
                 best_paper = new_paper
-        return best_paper, best_optimized_factor
+        return best_paper

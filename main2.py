@@ -1,7 +1,10 @@
 import argparse
 import logging
+import os
 import random
 
+import numpy as np
+import pandas as pd
 import torch
 from scipy.stats import truncnorm
 
@@ -9,7 +12,7 @@ from generate_paper.pdp_eg import PDP_EG
 from generate_paper.pga_eg import PGA_EG
 from model.DKT import DKT
 from model.qb import QB
-from model.reward import Reward
+from model.reward import Reward, optimization_factor, evaluate_model
 from model.student import convert_logs_to_one_hot_sequences, fetch_students_concept_status
 
 logging.getLogger().setLevel(logging.INFO)
@@ -38,21 +41,36 @@ def ctl():
     parser.add_argument('--epoch', type=int, default=50, help='number of update paper')
     parser.add_argument('--num_init_papers', type=int, default=1000, help='number of initial papers')
     parser.add_argument('--num_questions', type=int, default=100, help='number of questions each paper')
-    parser.add_argument('--num_students', type=int, default=4163, help='number of students')
+    parser.add_argument('--num_students', type=int, default=2548, help='number of students')
     parser.add_argument('--num_concepts', type=int, default=122, help='number of concept')
-    parser.add_argument('--dataset', type=str, default='c', help='dataset')
+    parser.add_argument('--dataset', type=str, default='c_filter', help='dataset')
     parser.add_argument('--gpu', type=int, default=0, help='gpu')
-    parser.add_argument('--load_model', type=str, default='./saved_models/models19', help='load model')
-    parser.add_argument('--all_num_questions', type=int, default=17751, help='number of questions in qb')
+    parser.add_argument('--load_model', type=str, default='./saved_models2/model19', help='load model')
+    parser.add_argument('--all_num_questions', type=int, default=17677, help='number of questions in qb')
     parser.add_argument('--hidden_size', type=int, default=64, help='Hidden size.')
     parser.add_argument('--num_layers', type=int, default=1, help='Number of LSTM layers.')
-    parser.add_argument('--mean', type=float, default=60, help='')
+    parser.add_argument('--mean', type=float, default=70, help='')
     parser.add_argument('--std', type=float, default=15, help='')
     parser.add_argument('--crossover_rate', type=float, default=0.8, help='crossover rate')
     parser.add_argument('--mutation_rate', type=float, default=0.003, help='mutation rate')
+    parser.add_argument('--method', type=str, default='pdp', help='pdp or pga')
+    parser.add_argument('--save_paper', type=bool, default=False, help='pdp or pga')
+    parser.add_argument('--save_paper_path', type=str, default='./papers/', help='pdp or pga')
     return parser.parse_args()
 
 
+def run(peg, args, students_concept_status):
+    logging.info('init...')
+    paper = peg.init(n=args.num_init_papers, num_q=args.num_questions)
+    logging.info('update...')
+    paper = peg.update(paper, args.num_questions, args.epoch)
+    logging.info('done')
+    optimized_factor = reward.optimization_factor(paper, students_concept_status)
+    logging.info(f"optimized_factor:{optimized_factor}")
+    return paper
+
+
+# divergence(score.detach().cpu().numpy(),self.reward.truncated_normal,True)
 if __name__ == '__main__':
     args = ctl()
 
@@ -68,10 +86,31 @@ if __name__ == '__main__':
     qb, students_concept_status = init_sq(args)
     reward = Reward(truncated_normal, qb_cover=qb.get_qb_cover())
 
-    peg = PDP_EG(qb, students_concept_status, reward)
-    # peg = PGA_EG(qb, students_concept_status, reward, args)
-    logging.info('init...')
-    paper = peg.init(n=args.num_init_papers, num_q=args.num_questions)
-    logging.info('update...')
-    paper = peg.update(paper, args.num_questions, args.epoch)
-    logging.info('done')
+    if args.method == 'pdp':
+        peg = PDP_EG(qb, students_concept_status, reward)
+    elif args.method == 'pga':
+        peg = PGA_EG(qb, students_concept_status, reward, args)
+    else:
+        raise ValueError('method must be pdp or pga')
+
+    evaluation = []
+    for i in range(20):
+        paper = run(peg, args, students_concept_status)
+
+        # 保存
+        if args.save_paper is not None:
+            if os.path.exists(os.path.join(args.save_paper_path, args.method)) is False:
+                os.makedirs(os.path.join(args.save_paper_path, args.method))
+            paper.save(os.path.join(args.save_paper_path, args.method, f'paper{i}.pkl'))
+
+        # 评估
+        result = evaluate_model(paper, students_concept_status, qb_cover=qb.get_qb_cover())
+        evaluation.append(result)
+    evaluation = np.array(evaluation)
+    logging.info(f'{args.method} evaluation: mean--{evaluation.mean(0)}, std--{evaluation.std(0)}')
+    # 保存
+    if args.save_paper is not None:
+        with open(os.path.join(args.save_paper_path, args.method, 'evaluation.csv'), 'wb') as f:
+            df = pd.DataFrame(evaluation)
+            df.to_csv(f, index=False,
+                      header=['五维度均值', '三维度均值','难度r1', '正态分布r2', '区分度r3', '知识点覆盖率r4', '信度r5'])

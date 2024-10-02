@@ -36,3 +36,6 @@ assert np.isclose(known_probs.sum() * np.diff(bins).mean(), 1, atol=1e-2), "Know
 kl_divergence = entropy(hist, known_probs)
 
 print("KL Divergence:", kl_divergence)
+# divergence(score3.detach().cpu().numpy(),self.reward.truncated_normal,True)
+# self.reward.optimization_factor(best_paper, self.student_concept_status,True)
+# best_paper.get_scores(self.student_concept_status)[best_paper.get_scores(self.student_concept_status)>80]
