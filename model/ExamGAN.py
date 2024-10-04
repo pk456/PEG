@@ -7,6 +7,8 @@ from torch import nn, optim
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 
+from model.paper import Paper
+from model.qb import QB
 from model.reward import Reward
 
 logging.getLogger().setLevel(logging.INFO)
@@ -25,7 +27,7 @@ class Generator(nn.Module):
         )
 
     def forward(self, z, condition):
-        z = torch.cat((z, condition), dim=1)
+        z = torch.cat((z, condition), dim=-1)
         return self.net(z)
 
 
@@ -42,7 +44,7 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, x, condition):
-        x = torch.cat((x, condition), dim=1)
+        x = torch.cat((x, condition), dim=-1)
         return self.net(x)
 
 
@@ -63,14 +65,12 @@ class ExamDataset(Dataset):
 
 
 class ExamGAN(object):
-    def __init__(self):
+    def __init__(self, args):
         # 参数设置
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.num_qb = 17677
-        self.condition_dim = 244
-        self.random_dim = 100
-        self.lr = 0.001
-        self.epoch = 200
+        self.num_qb = args.all_num_questions
+        self.condition_dim = args.num_concepts * 2
+        self.random_dim = args.random_dim
         self.final_dim = 1
 
         # 定义模型
@@ -146,7 +146,7 @@ class ExamGAN(object):
         # 生成试卷脚本
         self.generator.eval()
         with torch.no_grad():
-            noise = torch.randn(1, self.random_dim).to(self.device)
+            noise = torch.randn(self.random_dim).to(self.device)
             fake_qb = self.generator(noise, c)
             # 将生成的试卷脚本转换为文本
             return fake_qb
@@ -173,18 +173,19 @@ if __name__ == '__main__':
     train_loader = DataLoader(train_dataset, batch_size=32, shuffle=True)
 
     exam_gan = ExamGAN()
-    exam_gan.train(train_data=train_loader, batch_size=32)
-    exam_gan.save_model('../data/c_filter/gan/exam_gan')
-
+    # exam_gan.train(train_data=train_loader, batch_size=32)
+    # exam_gan.save_model('../data/c_filter/gan/exam_gan')
+    exam_gan.load_model('../data/c_filter/gan/exam_gan')
     val_dataset = ExamDataset('../data/c_filter/gan/val_data.pkl')
     val_loader = DataLoader(val_dataset, batch_size=1, shuffle=False)
-
+    qb = QB()
     for c, qb, student_concept_status in val_loader:
         c = c.to(device)
         qb = qb.to(device)
 
-        student_concept_status = torch.tensor(student_concept_status, dtype=torch.float32).to(device)
         fake_qb = exam_gan.generate_exam_script(c)
         print(fake_qb)
-        torch.topk(fake_qb[0], k=10)
+        questions = torch.topk(fake_qb[0], k=10)
+
+        paper = Paper(questions, )
     pass

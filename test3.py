@@ -8,3 +8,7 @@ values,indices = torch.topk(fake_qb, k=10)
 
 print(values)
 print(indices)
+
+import os
+
+print(os.path.dirname('../ad/asdsas'))

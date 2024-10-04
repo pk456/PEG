@@ -7,7 +7,10 @@ from generate_paper.pdp_eg import PEG
 
 class PGA_EG(PEG):
     def __init__(self, qb, student_concept_status, reward, args):
-        super().__init__(qb, student_concept_status, reward)
+        super().__init__()
+        self.qb = qb
+        self.student_concept_status = student_concept_status
+        self.reward = reward
         self.crossover_rate = args.crossover_rate
         self.mutation_rate = args.mutation_rate
 

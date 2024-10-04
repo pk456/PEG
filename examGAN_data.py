@@ -80,24 +80,26 @@ def init_sq_gan(args):
 
 def ctl():
     parser = argparse.ArgumentParser()
-
-    parser.add_argument('--random_seed', type=int, default=23)  # 用于计算分布stats.wasserstein_distance而增加
-    parser.add_argument('--epoch', type=int, default=50, help='number of update paper')
-    parser.add_argument('--num_init_papers', type=int, default=1000, help='number of initial papers')
-    parser.add_argument('--num_questions', type=int, default=100, help='number of questions each paper')
-    parser.add_argument('--num_students', type=int, default=2548, help='number of students')
-    parser.add_argument('--num_concepts', type=int, default=122, help='number of concept')
-    parser.add_argument('--dataset', type=str, default='c_filter', help='dataset')
-    parser.add_argument('--gpu', type=int, default=0, help='gpu')
-    parser.add_argument('--load_model', type=str, default='./saved_models2/model19', help='load model')
-    parser.add_argument('--all_num_questions', type=int, default=17677, help='number of questions in qb')
+    # 数据集相关设置
+    parser.add_argument('--dataset', type=str, default='c_filter2', help='dataset')
+    parser.add_argument('--all_num_questions', type=int, default=15161, help='number of questions in qb')
+    parser.add_argument('--num_concepts', type=int, default=116, help='number of concept')
+    # DKT网络相关设置
+    parser.add_argument('--load_model', type=str, default='./saved_models/c_filter2/model19', help='load model')
     parser.add_argument('--hidden_size', type=int, default=64, help='Hidden size.')
     parser.add_argument('--num_layers', type=int, default=1, help='Number of LSTM layers.')
+    # 班级试题相关设置
+    parser.add_argument('--num_students', type=int, default=50, help='number of students in a class')
+    parser.add_argument('--num_class', type=int, default=100, help='')
+    # 试题相关设置
+    parser.add_argument('--num_init_papers', type=int, default=1000, help='number of initial papers')
+    parser.add_argument('--num_questions', type=int, default=100, help='number of questions each paper')
     parser.add_argument('--mean', type=float, default=70, help='')
     parser.add_argument('--std', type=float, default=15, help='')
-    parser.add_argument('--train_rate', type=float, default=0.8, help='')
-    parser.add_argument('--val_rate', type=float, default=0.1, help='')
-    parser.add_argument('--num_class', type=int, default=100, help='')
+    # 其他设置
+    parser.add_argument('--gpu', type=int, default=0, help='gpu')  #
+    parser.add_argument('--train_rate', type=float, default=0.8, help='')  #
+    parser.add_argument('--val_rate', type=float, default=0.1, help='')  #
     return parser.parse_args()
 
 

@@ -2,10 +2,8 @@ import tqdm
 
 
 class PEG(object):
-    def __init__(self, qb, student_concept_status, reward):
-        self.qb = qb
-        self.student_concept_status = student_concept_status
-        self.reward = reward
+    def __init__(self):
+        pass
 
     def init(self, n, num_q):
         pass
@@ -20,7 +18,10 @@ def better_paper(optimized_factor, best_optimized_factor):
 
 class PDP_EG(PEG):
     def __init__(self, qb, student_concept_status, reward):
-        super().__init__(qb, student_concept_status, reward)
+        super().__init__()
+        self.qb = qb
+        self.student_concept_status = student_concept_status
+        self.reward = reward
 
     def init(self, n, num_q):
         best_paper = None

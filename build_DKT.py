@@ -33,7 +33,8 @@ def run(args):
     # 创建模型
     dkt = DKT(args.num_concepts, args.hidden_size, args.num_layers, device=device)
     # 对模型进行训练和保存
-    dkt.train(train_data=train_loader, test_data=test_loader, save_model_file=args.save_model_file, epoch=args.epoch,
+    dkt.train(train_data=train_loader, test_data=test_loader,
+              save_model_file=os.path.join(args.save_root, args.dataset, args.save_model_file), epoch=args.epoch,
               lr=args.lr)
     logging.info('Training finished.')
 
@@ -41,15 +42,23 @@ def run(args):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=int, default=0, help='GPU id to use.')
+    parser.add_argument('--max_len', type=int, default=200, help='Maximum length of the sequence.')
+    parser.add_argument('--shuffle', type=bool, default=True, help='Whether to shuffle the data.')
+    parser.add_argument('--train_size', type=float, default=0.8, help='Ratio of training data.')
+
+    # 数据集相关设置
+    parser.add_argument('--dataset', type=str, default='c_filter2', help='Dataset in the folder named "data".')
+    parser.add_argument('--num_concepts', type=int, default=116, help='Number of concepts.')
+
+    # 网络相关设置
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size.')
     parser.add_argument('--hidden_size', type=int, default=64, help='Hidden size.')
     parser.add_argument('--num_layers', type=int, default=1, help='Number of LSTM layers.')
     parser.add_argument('--epoch', type=int, default=20, help='Number of training epochs.')
     parser.add_argument('--lr', type=float, default=0.002, help='Learning rate.')
-    parser.add_argument('--num_concepts', type=int, default=116, help='Number of concepts.')
-    parser.add_argument('--save_model_file', type=str, default='./saved_models4/model', help='File to save the model.')
-    parser.add_argument('--dataset', type=str, default='c_filter2', help='Dataset in the folder named "data".')
-    parser.add_argument('--max_len', type=int, default=200, help='Maximum length of the sequence.')
-    parser.add_argument('--train_size', type=float, default=0.8, help='Ratio of training data.')
-    parser.add_argument('--shuffle', type=bool, default=True, help='Whether to shuffle the data.')
+
+    # 保存相关设置
+    parser.add_argument('--save_model_file', type=str, default='model', help='File to save the model.')
+    parser.add_argument('--save_root', type=str, default='saved_models', help='Whether to shuffle the data.')
+
     run(parser.parse_args())
