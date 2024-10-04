@@ -1,5 +1,7 @@
 import logging
 import os.path
+
+import numpy as np
 import torch
 import tqdm
 from torch import nn
@@ -48,8 +50,9 @@ class DKT(object):
 
         for e in range(epoch):
             self.dkt_model.train()
-            all_pred, all_target = torch.Tensor([]).to(self.device), torch.Tensor([]).to(self.device)
+            loss_ = []
             for batch in tqdm.tqdm(train_data, "Epoch %s" % e):
+                all_pred, all_target = torch.Tensor([]).to(self.device), torch.Tensor([]).to(self.device)
                 batch = batch.to(self.device)
                 integrated_pred = self.dkt_model(batch)
                 batch_size = batch.shape[0]
@@ -58,13 +61,14 @@ class DKT(object):
                     all_pred = torch.cat([all_pred, pred])
                     all_target = torch.cat([all_target, truth.float()])
 
-            loss = loss_function(all_pred, all_target)
-            # back propagation
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+                loss = loss_function(all_pred, all_target)
+                # back propagation
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
+                loss_.append(loss.item())
 
-            logging.info("[Epoch %d] LogisticLoss: %.6f" % (e, loss))
+            logging.info("[Epoch %d] LogisticLoss: %.6f" % (e, np.mean(loss_)))
 
             if test_data is not None:
                 auc = self.eval(test_data)

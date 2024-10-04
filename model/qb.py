@@ -50,7 +50,7 @@ class QB(object):
     def generate_paper(self, num_q):
         questions = np.array(random.sample(list(self.question_knowledge_mapping.keys()), num_q))
         # 获取试卷对应的知识点
-        paper_concepts = self._get_question_concepts(questions)
+        paper_concepts = self.get_question_concepts(questions)
 
         return Paper(questions, paper_concepts)
 
@@ -83,7 +83,7 @@ class QB(object):
         return [new_paper1, new_paper2]
 
     # 获取试卷中每道题目和知识点的关系
-    def _get_question_concepts(self, questions):
+    def get_question_concepts(self, questions):
         # todo：paper cuda问题
         paper_concepts = torch.zeros(len(questions), self.num_concepts).to(torch.device('cuda:0'))
         index = 0
