@@ -83,14 +83,15 @@ class DKT(object):
         self.dkt_model.eval()
         y_pred = torch.Tensor([]).to(self.device)
         y_truth = torch.Tensor([]).to(self.device)
-        for batch in tqdm.tqdm(test_data, "evaluating"):
-            batch = batch.to(self.device)
-            integrated_pred = self.dkt_model(batch)
-            batch_size = batch.shape[0]
-            for student in range(batch_size):
-                pred, truth = process_raw_pred(batch[student], integrated_pred[student], self.num_concepts)
-                y_pred = torch.cat([y_pred, pred])
-                y_truth = torch.cat([y_truth, truth])
+        with torch.no_grad():
+            for batch in tqdm.tqdm(test_data, "evaluating"):
+                batch = batch.to(self.device)
+                integrated_pred = self.dkt_model(batch)
+                batch_size = batch.shape[0]
+                for student in range(batch_size):
+                    pred, truth = process_raw_pred(batch[student], integrated_pred[student], self.num_concepts)
+                    y_pred = torch.cat([y_pred, pred])
+                    y_truth = torch.cat([y_truth, truth])
 
         return roc_auc_score(y_truth.detach().cpu().numpy(), y_pred.detach().cpu().numpy())
 

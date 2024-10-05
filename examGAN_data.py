@@ -69,7 +69,8 @@ def init_sq_gan(args):
     dkt = DKT(args.num_concepts, args.hidden_size, args.num_layers, device=torch.device(f'cuda:{args.gpu}'))
     dkt.load(args.load_model)
     dkt.dkt_model.eval()
-    students_concept_status = fetch_students_concept_status(students, dkt, args.num_concepts)
+    with torch.no_grad():
+        students_concept_status = fetch_students_concept_status(students, dkt, args.num_concepts)
 
     # 读取试卷信息
     qb = QB_GAN(args.all_num_questions, args.num_concepts, f'./data/{args.dataset}/graph/e_to_k.txt',

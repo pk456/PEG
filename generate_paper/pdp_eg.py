@@ -43,7 +43,7 @@ class PDP_EG(PEG):
         for i in tqdm.tqdm(range(epoch)):
             if i >= num_q:
                 break
-            new_paper, _ = self.qb.change_paper(init_data, [i])
+            new_paper, _ = self.qb.change_paper(best_paper, [i])
             optimized_factor, _ = self.reward.optimization_factor(new_paper, self.student_concept_status)
             if better_paper(optimized_factor, best_optimized_factor):
                 best_optimized_factor = optimized_factor

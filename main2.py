@@ -28,7 +28,8 @@ def init_sq(args):
     dkt = DKT(args.num_concepts, args.hidden_size, args.num_layers, device=torch.device(f'cuda:{args.gpu}'))
     dkt.load(args.load_model)
     dkt.dkt_model.eval()
-    students_concept_status = fetch_students_concept_status(students, dkt, args.num_concepts)
+    with torch.no_grad():
+        students_concept_status = fetch_students_concept_status(students, dkt, args.num_concepts)
 
     # 读取试卷信息
     qb = QB(args.all_num_questions, args.num_concepts, f'./data/{args.dataset}/graph/e_to_k.txt',
@@ -58,12 +59,12 @@ def ctl():
     parser.add_argument('--gan_save_path', type=str, default='./saved_models/c_filter2/exam_gan', help='只针对gan网络')
 
     # DKT网络设置
-    parser.add_argument('--load_model', type=str, default='./saved_models4/model19', help='load model')
+    parser.add_argument('--load_model', type=str, default='./saved_models/c_filter2/model19', help='load model')
     parser.add_argument('--hidden_size', type=int, default=64, help='Hidden size.')
     parser.add_argument('--num_layers', type=int, default=1, help='Number of LSTM layers.')
 
     # 班级试题相关设置
-    parser.add_argument('--num_students', type=int, default=2627, help='number of students')
+    parser.add_argument('--num_students', type=int, default=50, help='number of students')
     # 试题相关设置
     parser.add_argument('--num_questions', type=int, default=100, help='number of questions each paper')
     parser.add_argument('--num_init_papers', type=int, default=1000, help='number of initial papers')
@@ -71,7 +72,6 @@ def ctl():
     parser.add_argument('--std', type=float, default=15, help='')
     parser.add_argument('--save_paper', type=bool, default=False, help='pdp or pga or gan')
     parser.add_argument('--save_paper_path', type=str, default='./papers/', help='pdp or pga or gan')
-
 
     # 遗传相关设置
     parser.add_argument('--crossover_rate', type=float, default=0.8, help='crossover rate')
@@ -85,7 +85,7 @@ def run(peg, args, students_concept_status):
     logging.info('update...')
     paper = peg.update(paper, args.num_questions, args.epoch)
     logging.info('done')
-    optimized_factor = reward.optimization_factor(paper, students_concept_status)
+    optimized_factor = peg.reward.optimization_factor(paper, students_concept_status)
     logging.info(f"optimized_factor:{optimized_factor}")
     return paper
 

@@ -84,8 +84,7 @@ class QB(object):
 
     # 获取试卷中每道题目和知识点的关系
     def get_question_concepts(self, questions):
-        # todo：paper cuda问题
-        paper_concepts = torch.zeros(len(questions), self.num_concepts).to(torch.device('cuda:0'))
+        paper_concepts = torch.zeros(len(questions), self.num_concepts)
         index = 0
         for exer_id in questions:
             for knowledge_id in self.question_knowledge_mapping[exer_id]:

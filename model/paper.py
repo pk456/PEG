@@ -31,7 +31,7 @@ class Paper(object):
             :return:
             '''
         students_concept_status = students_concept_status.unsqueeze(1).expand(-1, self.paper_concepts.shape[0], -1)
-        concept_match = students_concept_status * self.paper_concepts
+        concept_match = students_concept_status * self.paper_concepts.to(students_concept_status.device)
         mask = torch.ne(concept_match, 0)
         concept_match = torch.where(mask, concept_match, 1)
         students_q_score = torch.prod(concept_match, dim=-1)
@@ -39,7 +39,7 @@ class Paper(object):
 
     def get_q_scores(self, students_concept_status):
         students_concept_status = students_concept_status.unsqueeze(1).expand(-1, self.paper_concepts.shape[0], -1)
-        concept_match = students_concept_status * self.paper_concepts
+        concept_match = students_concept_status * self.paper_concepts.to(students_concept_status.device)
         mask = torch.ne(concept_match, 0)
         concept_match = torch.where(mask, concept_match, 1)
         return torch.prod(concept_match, dim=-1)
@@ -51,7 +51,7 @@ class Paper(object):
             :return:
             '''
         students_concept_status = students_concept_status.unsqueeze(1).expand(-1, self.paper_concepts.shape[0], -1)
-        concept_match = students_concept_status * self.paper_concepts
+        concept_match = students_concept_status * self.paper_concepts.to(students_concept_status.device)
 
         mask = self.paper_concepts != 0
         concept_num = torch.sum(mask, dim=-1)
@@ -66,7 +66,7 @@ class Paper(object):
             :return:
             '''
         students_concept_status = students_concept_status.unsqueeze(1).expand(-1, self.paper_concepts.shape[0], -1)
-        concept_match = students_concept_status * self.paper_concepts
+        concept_match = students_concept_status * self.paper_concepts.to(students_concept_status.device)
         mask = torch.ne(concept_match, 0)
         concept_match = torch.where(mask, concept_match, 1)
         students_q_score = torch.prod(concept_match, dim=-1)

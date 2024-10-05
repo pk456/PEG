@@ -38,7 +38,7 @@ class PGA_EG(PEG):
         best_paper = None
         best_optimized_factor = None
         for paper in paper_pop:
-            optimized_factor = self.reward.optimization_factor(paper, self.student_concept_status)[0]
+            optimized_factor = 1 - self.reward.optimization_factor(paper, self.student_concept_status)[0]
             if (best_paper is None and best_optimized_factor is None) or optimized_factor > best_optimized_factor:
                 best_paper = paper
                 best_optimized_factor = optimized_factor
