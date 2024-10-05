@@ -1,4 +1,4 @@
-
+#!/bin/bash
 # 数据集搭建
 python examGAN_data.py \
     # 数据集相关设置

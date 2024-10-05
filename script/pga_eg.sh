@@ -1,4 +1,4 @@
-#bin/bash
+#!/bin/bash
 # 数据准备:执行dkt.sh
 
 # 获取试卷
@@ -13,4 +13,4 @@ python main2.py --method=pga --epoch=100 \
     --mean=70 --std=15 --num_questions=100 --num_init_papers=1000 \
     --save_paper=True --save_paper_path=./papers/ \
     # 生成相关设置
-    --crossover_rate=0.8 ----mutation_rate=0.003
+    --crossover_rate=0.8 --mutation_rate=0.003

@@ -1,5 +1,4 @@
-#bin/bash
-# 数据准备:执行dkt.sh
+#!/bin/bash
 
 # 获取试卷
 python build_DKT.py --max_len=200 --train_size=0.8 \
