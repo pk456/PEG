@@ -4,8 +4,6 @@ import random
 import numpy as np
 import tqdm
 
-from data_preprocess.prepare_dataset2 import encode_onehot2, parse_student_seq2
-
 
 def parse_student_seq(student):
     q_all = []
