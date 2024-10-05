@@ -155,5 +155,5 @@ if __name__ == '__main__':
         with open(os.path.join(args.save_paper_path, args.dataset, args.method, 'evaluation.csv'), 'wb') as f:
             df = pd.DataFrame(evaluation)
             df.to_csv(f, index=False,
-                      header=['五维度均值', '三维度均值', '难度r1', '正态分布r2', '区分度r3', '知识点覆盖率r4',
+                      header=['四维度均值', '三维度均值', '难度r1', '正态分布r2', '区分度r3', '知识点覆盖率r4',
                               '信度r5'])

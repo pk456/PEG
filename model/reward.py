@@ -144,9 +144,9 @@ def evaluate_model(paper, student_concept_status, qb_cover):
     data_normalized = pd.DataFrame(data_normalized)
     r5 = pg.cronbach_alpha(data_normalized)[0]
 
-    r_5 = np.mean([r1, r2, r3, r4, r5])
+    r_4 = np.mean([r1, r2, r3, r4])
     r_3 = np.mean([r1, r2, r4])
-    return [r_5, r_3, r1, r2, r3, r4, r5]
+    return [r_4, r_3, r1, r2, r3, r4, r5]
 
 
 if __name__ == '__main__':
