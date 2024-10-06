@@ -54,7 +54,7 @@ class Paper(object):
         concept_match = students_concept_status * self.paper_concepts.to(students_concept_status.device)
 
         mask = self.paper_concepts != 0
-        concept_num = torch.sum(mask, dim=-1)
+        concept_num = torch.sum(mask, dim=-1).to(students_concept_status.device)
 
         students_q_score = torch.sum(concept_match, dim=-1) / concept_num
         return torch.sum(students_q_score, dim=-1)
