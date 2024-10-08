@@ -4,11 +4,8 @@
     利用exer.txt存储了所有试题的编号，利用这个来抽题组卷
     这两个属性都是后续一直要用到的，所以建立一个class
 '''
-import copy
 import pickle
-import random
 
-import numpy as np
 import torch
 
 

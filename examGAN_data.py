@@ -16,7 +16,6 @@ import pickle
 import random
 
 import numpy as np
-import pandas as pd
 import torch
 import tqdm
 from scipy.stats import truncnorm
@@ -24,7 +23,7 @@ from scipy.stats import truncnorm
 from model.DKT import DKT
 from model.paper import Paper
 from model.qb import QB
-from model.reward import Reward, divergence
+from model.reward import divergence
 from model.student import fetch_students_concept_status, convert_logs_to_one_hot_sequences
 
 '''

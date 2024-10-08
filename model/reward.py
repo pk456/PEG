@@ -1,12 +1,10 @@
 import numpy as np
 import pandas as pd
-import torch
-import torch.nn.functional as F
-from scipy.stats import truncnorm, entropy
+import pingouin as pg
 from scipy import stats
+from scipy.stats import truncnorm, entropy
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import MinMaxScaler
-import pingouin as pg
 
 
 # 知识点覆盖率

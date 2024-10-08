@@ -1,14 +1,13 @@
-import torch
+import time
 
-fake_qb = torch.tensor(
-    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28])
-#除以100
-fake_qb = torch.div(fake_qb, 100)
-values,indices = torch.topk(fake_qb, k=10)
+# 记录开始时间
+start = time.time()
 
-print(values)
-print(indices)
+# 模拟一段耗时的代码
+time.sleep(2)  # 模拟耗时2秒的操作
 
-import os
+# 记录结束时间
+end = time.time()
 
-print(os.path.dirname('../ad/asdsas'))
+# 计算并打印执行时间
+print('Time elapsed:', end - start, 'seconds')

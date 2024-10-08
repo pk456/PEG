@@ -4,9 +4,9 @@ import random
 import numpy as np
 import torch
 import tqdm
+from model.DKT2 import DKT
 from scipy.stats import truncnorm
 
-from model.DKT2 import DKT
 from model.qb import QB
 from model.reward import optimization_factor
 from model.student import convert_logs_to_one_hot_sequences, fetch_students_concept_status

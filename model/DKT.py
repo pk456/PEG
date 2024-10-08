@@ -4,9 +4,9 @@ import os.path
 import numpy as np
 import torch
 import tqdm
+from sklearn.metrics import roc_auc_score
 from torch import nn
 from torch.autograd import Variable
-from sklearn.metrics import roc_auc_score
 
 
 class Net(nn.Module):

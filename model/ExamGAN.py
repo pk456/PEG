@@ -1,15 +1,15 @@
 import logging
+import os
 import pickle
 
+import numpy as np
 import torch
 import tqdm
-from torch import nn, optim
-import numpy as np
+from torch import nn
 from torch.utils.data import Dataset, DataLoader
 
 from model.paper import Paper
 from model.qb import QB
-from model.reward import Reward
 
 logging.getLogger().setLevel(logging.INFO)
 
@@ -67,7 +67,7 @@ class ExamDataset(Dataset):
 class ExamGAN(object):
     def __init__(self, args):
         # 参数设置
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device(('cuda:%d' % args.gpu) if torch.cuda.is_available() else "cpu")
         self.num_qb = args.all_num_questions
         self.condition_dim = args.num_concepts * 2
         self.random_dim = args.random_dim
@@ -164,6 +164,10 @@ class ExamGAN(object):
             self.generator.load_state_dict(torch.load(f))
         with open(path + '_discriminator', 'rb') as f:
             self.discriminator.load_state_dict(torch.load(f))
+
+    # 判断path是否保存了model
+    def exist_model(self, path):
+        return os.path.exists(path + '_generator') and os.path.exists(path + '_discriminator')
 
 
 if __name__ == '__main__':
