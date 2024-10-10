@@ -50,8 +50,8 @@ class QB_GAN(QB):
 
     def select_concepts_by_frequency(self, n):
         qb_cover = self.get_qb_cover()
-        # return random.choices(range(self.num_concepts), weights=qb_cover, k=n)
-        return np.random.choice(range(self.num_concepts), size=n, replace=False, p=qb_cover)
+        return random.choices(range(self.num_concepts), weights=qb_cover, k=n)
+        # return np.random.choice(range(self.num_concepts), size=n, replace=False, p=qb_cover)
 
     def generate_paper_by_concepts(self, concepts):
         questions = []
