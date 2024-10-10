@@ -1,13 +1,21 @@
 import time
 
 # 记录开始时间
-start = time.time()
+# start = time.time()
+#
+# # 模拟一段耗时的代码
+# time.sleep(2)  # 模拟耗时2秒的操作
+#
+# # 记录结束时间
+# end = time.time()
+#
+# # 计算并打印执行时间
+# print('Time elapsed:', end - start, 'seconds')
 
-# 模拟一段耗时的代码
-time.sleep(2)  # 模拟耗时2秒的操作
+b = {'a':[1,2,3,4,5]}
 
-# 记录结束时间
-end = time.time()
+a = b['a']
 
-# 计算并打印执行时间
-print('Time elapsed:', end - start, 'seconds')
+a.remove(1)
+print(a)
+print(b)

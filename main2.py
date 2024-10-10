@@ -123,17 +123,18 @@ def run2(exam_gan, args, students_concept_status, qb):
 
 
 def generate_one_paper(args, qb, students_concept_status, reward):
-    if args.method == 'pdp':
-        peg = PDP_EG(qb, students_concept_status, reward)
-    elif args.method == 'pga':
-        peg = PGA_EG(qb, students_concept_status, reward, args)
-    elif args.method == 'gan':
-        peg = ExamGAN(args)
-    else:
-        raise ValueError('method must be pdp or pga')
-
     evaluation = []
     for i in range(args.num_papers):
+        _, students_concept_status = init_sq(args)
+        if args.method == 'pdp':
+            peg = PDP_EG(qb, students_concept_status, reward)
+        elif args.method == 'pga':
+            peg = PGA_EG(qb, students_concept_status, reward, args)
+        elif args.method == 'gan':
+            peg = ExamGAN(args)
+        else:
+            raise ValueError('method must be pdp or pga')
+
         if args.method == 'gan':
             paper = run2(peg, args, students_concept_status, qb)
         else:
