@@ -1,5 +1,6 @@
 import random
 
+import numpy as np
 import tqdm
 
 from generate_paper.pdp_eg import PEG
@@ -24,8 +25,9 @@ class PGA_EG(PEG):
         paper_pop = init_data
         for i in tqdm.tqdm(range(epoch)):
             new_paper_pop = []
-            optimization_factors = [
-                1 - self.reward.optimization_factor(paper, self.student_concept_status)[0] for paper in paper_pop]
+            optimization_factors = np.array([
+                self.reward.optimization_factor(paper, self.student_concept_status)[0] for paper in paper_pop])
+            optimization_factors = 1 - optimization_factors / np.sum(optimization_factors)
             while len(new_paper_pop) < len(init_data):
                 offsprings = self._selection(paper_pop, optimization_factors, 2)
                 if random.random() <= self.crossover_rate:

@@ -1,21 +1,15 @@
-import time
+import random
 
-# 记录开始时间
-# start = time.time()
-#
-# # 模拟一段耗时的代码
-# time.sleep(2)  # 模拟耗时2秒的操作
-#
-# # 记录结束时间
-# end = time.time()
-#
-# # 计算并打印执行时间
-# print('Time elapsed:', end - start, 'seconds')
+import numpy as np
 
-b = {'a':[1,2,3,4,5]}
+population = ['A', 'B', 'C']
+weights = [0.2, 0.3, 0.5]
 
-a = b['a']
+# 这将引发 ValueError
+selected = random.choices(population, cum_weights=weights, k=2)
+print(selected)
 
-a.remove(1)
-print(a)
-print(b)
+selected = np.random.choice(population, size=2, replace=False, p=weights)
+print(selected)
+
+print(population)

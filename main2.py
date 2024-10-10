@@ -42,17 +42,17 @@ def init_sq(args):
 
 def ctl():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--method', type=str, default='t_gan', help='pdp or pga or gan')
+    parser.add_argument('--method', type=str, default='pga', help='pdp or pga or gan')
     parser.add_argument('--num_papers', type=int, default=100, help='num of papers')
     parser.add_argument('--twin', type=bool, default=False, help='whether use twin')
 
     parser.add_argument('--random_seed', type=int, default=23)  # 用于计算分布stats.wasserstein_distance而增加
-    parser.add_argument('--epoch', type=int, default=50, help='number of update paper')
+    parser.add_argument('--epoch', type=int, default=100, help='number of update paper')
     parser.add_argument('--gpu', type=int, default=0, help='gpu')
     # 数据集相关设置
-    parser.add_argument('--dataset', type=str, default='c_filter2', help='dataset')
-    parser.add_argument('--all_num_questions', type=int, default=15161, help='number of questions in qb')
-    parser.add_argument('--num_concepts', type=int, default=116, help='number of concept')
+    parser.add_argument('--dataset', type=str, default='static', help='dataset')
+    parser.add_argument('--all_num_questions', type=int, default=154, help='number of questions in qb')
+    parser.add_argument('--num_concepts', type=int, default=80, help='number of concept')
     parser.add_argument('--train_data_file', type=str, default='gan/train_data.pkl',
                         help='train data file,拼接dataset路径，只针对gan网络')
 
@@ -60,10 +60,10 @@ def ctl():
     parser.add_argument('--batch_size', type=int, default=32, help='batch size,，只针对gan网络')
     parser.add_argument('--random_dim', type=int, default=100, help='random_dim,，只针对gan网络')
     parser.add_argument('--lr', type=float, default=0.001, help='random_dim,，只针对gan网络')
-    parser.add_argument('--gan_save_path', type=str, default='./saved_models/c_filter2/exam_gan', help='只针对gan网络')
+    parser.add_argument('--gan_save_path', type=str, default='./saved_models/static/exam_gan', help='只针对gan网络')
 
     # DKT网络设置
-    parser.add_argument('--load_model', type=str, default='./saved_models/c_filter2/model19', help='load model')
+    parser.add_argument('--load_model', type=str, default='./saved_models/static/model19', help='load model')
     parser.add_argument('--hidden_size', type=int, default=64, help='Hidden size.')
     parser.add_argument('--num_layers', type=int, default=1, help='Number of LSTM layers.')
 

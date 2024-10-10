@@ -14,7 +14,7 @@
 #    --save_paper=True --save_paper_path=./papers/ \
 #    # 生成相关设置
 #    --crossover_rate=0.8 --mutation_rate=0.003
-    
+
 python main2.py --method=pga --epoch=100 \
     --dataset=static --all_num_questions=154 --num_concepts=80 \
     --load_model=./saved_models/static/model19 --hidden_size=64 --num_layers=1 \
